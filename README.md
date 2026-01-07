@@ -18,20 +18,20 @@ Installation
 Run the following commands in a standard Command Prompt (CMD) to create the directory structure and install the necessary libraries.
 Code snippet
 
-mkdir "%USERPROFILE%\GeminiCLI"
-cd /d "%USERPROFILE%\GeminiCLI"
-python -m venv venv
-call venv\Scripts\activate
-pip install -U google-generativeai
+    mkdir "%USERPROFILE%\GeminiCLI"
+    cd /d "%USERPROFILE%\GeminiCLI"
+    python -m venv venv
+    call venv\Scripts\activate
+    pip install -U google-generativeai
 
 2. Configure API Key
 
 Set your API key as a persistent User environment variable. Replace YOUR_API_KEY with your actual key.
 
 PowerShell:
-PowerShell
 
-[Environment]::SetEnvironmentVariable("GOOGLE_API_KEY", "YOUR_API_KEY", "User")
+    PowerShell
+    [Environment]::SetEnvironmentVariable("GOOGLE_API_KEY", "YOUR_API_KEY", "User")
 
 Note: Restart your terminal after running this for the changes to take effect.
 3. PowerShell Profile Integration
