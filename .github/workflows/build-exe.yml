@@ -1,5 +1,8 @@
 name: Build Gemini CLI Executable
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ "main" ]
