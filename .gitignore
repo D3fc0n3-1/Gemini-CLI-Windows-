@@ -1,0 +1,8 @@
+# Local python environment
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Environment variables / Keys
+.env
