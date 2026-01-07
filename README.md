@@ -48,36 +48,58 @@ Paste the following block at the end of the file:
 
 function Get-Gemini {
     param(
-        [Parameter(Mandatory=$true, Position=0)]
-        [string]$Prompt
+        [Parameter(Mandatory=$false, Position=0, ValueFromPipeline=$true)]
+        [string]$Prompt,
+        
+        [Parameter(Mandatory=$false)]
+        [switch]$Pro
     )
 
-    $PythonExe = "$env:USERPROFILE\GeminiCLI\venv\Scripts\python.exe"
-    
-    # Inline Python script using the modern google-genai SDK
-    $Script = @"
+    begin {
+        $InputText = ""
+    }
+    process {
+        if ($_) { $InputText += "$_`n" }
+    }
+    end {
+        # Select model based on -Pro switch
+        $ModelName = if ($Pro) { "gemini-1.5-pro" } else { "gemini-1.5-flash" }
+        
+        # Combine piped input with the prompt
+        $FinalPrompt = if ($InputText) { "$Prompt`n`nCONTEXT/DATA:`n$InputText" } else { $Prompt }
+
+        if (-not $FinalPrompt) {
+            Write-Error "Please provide a prompt or pipe data to the command."
+            return
+        }
+
+        $PythonExe = "$env:USERPROFILE\GeminiCLI\venv\Scripts\python.exe"
+        
+        $Script = @"
 from genai import Client
 import os
 import sys
 
 api_key = os.environ.get('GOOGLE_API_KEY')
 if not api_key:
-    print('Error: GOOGLE_API_KEY not found in environment.')
+    print('Error: GOOGLE_API_KEY not found.')
     sys.exit(1)
 
 client = Client(api_key=api_key)
 
 try:
+    # Model and prompt passed from PowerShell
     response = client.models.generate_content(
-        model='gemini-1.5-flash',
-        contents=sys.argv[1]
+        model=sys.argv[1],
+        contents=sys.argv[2]
     )
     print(response.text)
 except Exception as e:
     print(f'Error: {str(e)}')
 "@
 
-    & $PythonExe -c $Script $Prompt
+        & $PythonExe -c $Script $ModelName $FinalPrompt
+    }
 }
 
 Set-Alias -Name gemini -Value Get-Gemini
@@ -88,7 +110,19 @@ Set-Alias -Name gemini -Value Get-Gemini
 You can now call Gemini from any PowerShell window:
 ```PowerShell
 
-gemini "Explain the difference between a TCP and UDP sweep in Nmap"
+gemini "Write a secure Python script for an air-gapped environment" -Pro
+```
+
+2. Piping Data (Log Analysis): If you have a log file or a command output, you can pipe it directly:
+```PowerShell
+
+Get-Content .\security_logs.txt | gemini "Analyze these logs for suspicious IP addresses"
+```
+
+3. Troubleshooting Network Issues:
+```PowerShell
+
+ipconfig /all | gemini "Explain my network configuration and check for DNS leaks"
 ```
 
 📝 Troubleshooting
