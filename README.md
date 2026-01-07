@@ -34,16 +34,18 @@ PowerShell:
     [Environment]::SetEnvironmentVariable("GOOGLE_API_KEY", "YOUR_API_KEY", "User")
 
 Note: Restart your terminal after running this for the changes to take effect.
+
+
 3. PowerShell Profile Integration
 
 To use the gemini command natively in PowerShell, add the following function to your profile.
 
-    Open your profile in Notepad: notepad $PROFILE
+Open your profile in Notepad:
+    
+    notepad $PROFILE
 
-    Append the following code:
-
-PowerShell
-
+Append the following code:
+```
 # Gemini CLI Integration
 function Get-Gemini {
     param(
@@ -76,24 +78,24 @@ except Exception as e:
 }
 
 Set-Alias -Name gemini -Value Get-Gemini
-
+```
 Usage
 PowerShell
 
 Once configured, you can call Gemini from any directory:
+```
 PowerShell
 
 gemini "Explain the difference between a TCP and UDP sweep in Nmap"
-
+```
 Command Prompt (CMD)
 
 You can call the executable directly from CMD using the following syntax:
+```
 DOS
 
 "%USERPROFILE%\GeminiCLI\venv\Scripts\python.exe" -c "import google.generativeai as g; import os; g.configure(api_key=os.environ['GOOGLE_API_KEY']); print(g.GenerativeModel('gemini-1.5-flash').generate_content('Hello from CMD').text)"
-
+```
 Security Considerations
-
     API Key Safety: This implementation uses EnvironmentVariableTarget.User to avoid hardcoding keys in scripts.
-
-    Virtual Environment: By using a venv, we prevent version conflicts with other Python-based cybersecurity tools (like Impacket or Responder).
+    Virtual Environment: By using a venv, we prevent version conflicts with other Python-based cybersecurity tools (like Impacket or Responder).sing a venv, we prevent version conflicts with other Python-based cybersecurity tools (like Impacket or Responder).
