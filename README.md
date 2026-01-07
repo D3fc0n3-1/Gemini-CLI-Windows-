@@ -1,30 +1,58 @@
-# Gemini-CLI-Windows-
-installer for Command prompt and Power Shell
+Gemini CLI PowerShell Integration
 
+A lightweight, local integration to bring Google Gemini AI capabilities directly into the Windows PowerShell and Command Prompt (CMD) environments.
+Overview
 
-Step 1: Create the PowerShell Integration
+This setup creates a global gemini command in your terminal. It leverages a Python virtual environment to keep your system clean and uses Windows Environment Variables to securely handle your API keys.
+Prerequisites
 
-We will create a function that handles the API call and alias it to the command gemini.
+    Windows 11
 
-    Open PowerShell.
+    Python 3.10+
 
-    Type notepad $PROFILE and hit Enter. (If it asks to create a new file, say Yes).
+    Gemini API Key: Obtain one from the Google AI Studio.
 
-    Paste the following code into that file:
+Installation
+1. Automated Environment Setup
+
+Run the following commands in a standard Command Prompt (CMD) to create the directory structure and install the necessary libraries.
+Code snippet
+
+mkdir "%USERPROFILE%\GeminiCLI"
+cd /d "%USERPROFILE%\GeminiCLI"
+python -m venv venv
+call venv\Scripts\activate
+pip install -U google-generativeai
+
+2. Configure API Key
+
+Set your API key as a persistent User environment variable. Replace YOUR_API_KEY with your actual key.
+
+PowerShell:
+PowerShell
+
+[Environment]::SetEnvironmentVariable("GOOGLE_API_KEY", "YOUR_API_KEY", "User")
+
+Note: Restart your terminal after running this for the changes to take effect.
+3. PowerShell Profile Integration
+
+To use the gemini command natively in PowerShell, add the following function to your profile.
+
+    Open your profile in Notepad: notepad $PROFILE
+
+    Append the following code:
 
 PowerShell
 
-# Gemini CLI Integration for PowerShell
+# Gemini CLI Integration
 function Get-Gemini {
     param(
         [Parameter(Mandatory=$true, Position=0)]
         [string]$Prompt
     )
 
-    # Path to your Python Virtual Env created earlier
     $PythonExe = "$env:USERPROFILE\GeminiCLI\venv\Scripts\python.exe"
     
-    # Inline Python script to handle the API call
     $Script = @"
 import google.generativeai as genai
 import os
@@ -32,7 +60,7 @@ import sys
 
 api_key = os.environ.get('GOOGLE_API_KEY')
 if not api_key:
-    print('Error: GOOGLE_API_KEY environment variable not set.')
+    print('Error: GOOGLE_API_KEY not found in environment variables.')
     sys.exit(1)
 
 genai.configure(api_key=api_key)
@@ -44,38 +72,28 @@ except Exception as e:
     print(f'Error: {str(e)}')
 "@
 
-    # Execute via Python venv
     & $PythonExe -c $Script $Prompt
 }
 
-# Create the Alias
 Set-Alias -Name gemini -Value Get-Gemini
 
-    Save and close Notepad.
-
-    Reload your profile by running: . $PROFILE
-
-Step 2: Set the Global Environment Variable
-
-For the command to work in both CMD and PowerShell without re-entering your key, we need to set it at the User level.
-
-Run this once in PowerShell (replace the placeholder with your actual key):
+Usage
 PowerShell
 
-[Environment]::SetEnvironmentVariable("GOOGLE_API_KEY", "your_actual_key_here", "User")
-
-Note: You will need to restart your terminal window for this global change to take effect.
-Step 3: Usage in Both Terminals
-In PowerShell:
-
-You can now use it like a native cmdlet. Because of your cybersecurity background, you’ll appreciate that this method keeps the prompt as a string object:
+Once configured, you can call Gemini from any directory:
 PowerShell
 
-gemini "Write a quick powershell script to audit open ports on this machine"
+gemini "Explain the difference between a TCP and UDP sweep in Nmap"
 
-In Command Prompt (CMD):
+Command Prompt (CMD)
 
-Since the Python virtual environment is already set up, you can call it directly from CMD using this one-liner syntax:
+You can call the executable directly from CMD using the following syntax:
 DOS
 
-%USERPROFILE%\GeminiCLI\venv\Scripts\python.exe -c "import google.generativeai as g; import os; g.configure(api_key=os.environ['GOOGLE_API_KEY']); print(g.GenerativeModel('gemini-1.5-flash').generate_content('Hello from CMD').text)"
+"%USERPROFILE%\GeminiCLI\venv\Scripts\python.exe" -c "import google.generativeai as g; import os; g.configure(api_key=os.environ['GOOGLE_API_KEY']); print(g.GenerativeModel('gemini-1.5-flash').generate_content('Hello from CMD').text)"
+
+Security Considerations
+
+    API Key Safety: This implementation uses EnvironmentVariableTarget.User to avoid hardcoding keys in scripts.
+
+    Virtual Environment: By using a venv, we prevent version conflicts with other Python-based cybersecurity tools (like Impacket or Responder).
