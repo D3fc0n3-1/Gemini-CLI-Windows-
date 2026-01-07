@@ -50,58 +50,54 @@ function Get-Gemini {
     param(
         [Parameter(Mandatory=$false, Position=0, ValueFromPipeline=$true)]
         [string]$Prompt,
-        
-        [Parameter(Mandatory=$false)]
-        [switch]$Pro
+        [switch]$Pro,
+        [switch]$List
     )
-
-    begin {
-        $InputText = ""
-    }
-    process {
-        if ($_) { $InputText += "$_`n" }
-    }
+    begin { $InputText = "" }
+    process { if ($_) { $InputText += "$_`n" } }
     end {
-        # Select model based on -Pro switch
-        $ModelName = if ($Pro) { "gemini-1.5-pro" } else { "gemini-1.5-flash" }
+        $PythonExe = "$env:USERPROFILE\GeminiCLI\venv\Scripts\python.exe"
         
-        # Combine piped input with the prompt
-        $FinalPrompt = if ($InputText) { "$Prompt`n`nCONTEXT/DATA:`n$InputText" } else { $Prompt }
-
-        if (-not $FinalPrompt) {
-            Write-Error "Please provide a prompt or pipe data to the command."
+        if ($List) {
+            $ListCmd = "from google import genai; import os; client = genai.Client(api_key=os.environ.get('GOOGLE_API_KEY'), http_options={'api_version': 'v1beta'});" +
+                       "print('\nAvailable Models:'); [print(f'- {m.name}') for m in client.models.list()]"
+            & $PythonExe -c $ListCmd
             return
         }
 
-        $PythonExe = "$env:USERPROFILE\GeminiCLI\venv\Scripts\python.exe"
+        # Set the target and the fallback
+        $Primary = if ($Pro) { "models/gemini-2.5-pro" } else { "models/gemini-3-flash-preview" }
+        $Fallback = "models/gemini-3-flash-preview"
+        $FinalPrompt = if ($InputText) { "$Prompt`n`nCONTEXT/DATA:`n$InputText" } else { $Prompt }
         
-        $Script = @"
-from genai import Client
-import os
-import sys
+        if (-not $FinalPrompt) { return }
 
-api_key = os.environ.get('GOOGLE_API_KEY')
-if not api_key:
-    print('Error: GOOGLE_API_KEY not found.')
-    sys.exit(1)
-
-client = Client(api_key=api_key)
+        $Cmd = @"
+from google import genai
+import os, sys
+client = genai.Client(api_key=os.environ.get('GOOGLE_API_KEY'), http_options={'api_version': 'v1beta'})
+primary_model = sys.argv[1]
+fallback_model = sys.argv[2]
+prompt = sys.argv[3]
 
 try:
-    # Model and prompt passed from PowerShell
-    response = client.models.generate_content(
-        model=sys.argv[1],
-        contents=sys.argv[2]
-    )
+    # Try the requested model first
+    response = client.models.generate_content(model=primary_model, contents=prompt)
     print(response.text)
 except Exception as e:
-    print(f'Error: {str(e)}')
+    if '429' in str(e):
+        print(f'-- Quota hit on {primary_model}. Falling back to {fallback_model}... --', file=sys.stderr)
+        try:
+            response = client.models.generate_content(model=fallback_model, contents=prompt)
+            print(response.text)
+        except Exception as e2:
+            print(f'Critical Error: {str(e2)}', file=sys.stderr)
+    else:
+        print(f'Error: {str(e)}', file=sys.stderr)
 "@
-
-        & $PythonExe -c $Script $ModelName $FinalPrompt
+        & $PythonExe -c $Cmd $Primary $Fallback $FinalPrompt
     }
 }
-
 Set-Alias -Name gemini -Value Get-Gemini
 ```
 
