@@ -1,0 +1,36 @@
+# Gemini CLI Integration for PowerShell
+function Get-Gemini {
+    param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$Prompt
+    )
+
+    # Path to your Python Virtual Env created earlier
+    $PythonExe = "$env:USERPROFILE\GeminiCLI\venv\Scripts\python.exe"
+    
+    # Inline Python script to handle the API call
+    $Script = @"
+import google.generativeai as genai
+import os
+import sys
+
+api_key = os.environ.get('GOOGLE_API_KEY')
+if not api_key:
+    print('Error: GOOGLE_API_KEY environment variable not set.')
+    sys.exit(1)
+
+genai.configure(api_key=api_key)
+model = genai.GenerativeModel('gemini-1.5-flash')
+try:
+    response = model.generate_content(sys.argv[1])
+    print(response.text)
+except Exception as e:
+    print(f'Error: {str(e)}')
+"@
+
+    # Execute via Python venv
+    & $PythonExe -c $Script $Prompt
+}
+
+# Create the Alias
+Set-Alias -Name gemini -Value Get-Gemini
