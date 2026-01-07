@@ -2,8 +2,6 @@
 installer for Command prompt and Power Shell
 
 
-PowerShell Profile integration
-
 Step 1: Create the PowerShell Integration
 
 We will create a function that handles the API call and alias it to the command gemini.
