@@ -2,6 +2,8 @@
 
 A streamlined way to integrate Google's Gemini AI into the Windows 11 Command Prompt and PowerShell. This project provides a global `gemini` command to interact with AI directly from your terminal.
 
+"Download the latest gemini.exe from the Releases page, add your GOOGLE_API_KEY to your environment variables, and you're ready to go."
+
 ---
 
 ## 🛠 Prerequisites
