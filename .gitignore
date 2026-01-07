@@ -6,6 +6,8 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+dist/ 
+build/
 
 # Windows local files
 .DS_Store
