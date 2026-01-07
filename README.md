@@ -1,65 +1,96 @@
-Gemini-CLI-Windows 🚀
+# Gemini-CLI-Windows 🚀
 
-A streamlined way to integrate Google's Gemini AI into the Windows 11 Command Prompt and PowerShell. This project provides a global gemini command that you can use to interact with AI directly from your terminal.
-🛠 Prerequisites
+A streamlined way to integrate Google's Gemini AI into the Windows 11 Command Prompt and PowerShell. This project provides a global `gemini` command to interact with AI directly from your terminal.
 
-    Windows 11
+---
 
-    Python 3.10+ (Install via winget install -e --id Python.Python.3.11)
+## 🛠 Prerequisites
 
-    Gemini API Key: Get it free at Google AI Studio
+- **Windows 11**
+- **Python 3.10+** (Install via: `winget install -e --id Python.Python.3.11`)
+- **Gemini API Key:** Obtain yours at [Google AI Studio](https://aistudio.google.com/app/apikey)
 
-📦 Installation
-1. Set Up the Environment
+---
 
-Run these commands in your Command Prompt to create a dedicated, clean environment for the CLI:
-Code snippet
+## 📦 Installation
 
+### 1. Set Up the Environment
+Run these commands in your Command Prompt to create a dedicated, clean environment:
+
+```batch
 mkdir "%USERPROFILE%\GeminiCLI"
 cd /d "%USERPROFILE%\GeminiCLI"
 python -m venv venv
 call venv\Scripts\activate
 pip install -U google-genai
+```
 
 2. Configure Your API Key
 
-Add your key to your Windows User Environment Variables so it’s available globally:
-PowerShell
+Set your key as a persistent User environment variable.
 
-# Run this in PowerShell (replace YOUR_KEY)
+In PowerShell (Run as Administrator):
+```PowerShell
+
 [Environment]::SetEnvironmentVariable("GOOGLE_API_KEY", "YOUR_KEY_HERE", "User")
+```
 
-Restart your terminal after this step.
-3. PowerShell Profile Integration
+Note: Close and reopen your terminal after this step.
+🐚 PowerShell Integration
 
-Add the following function to your PowerShell profile to enable the gemini command:
+To enable the gemini command natively, add the function below to your PowerShell profile.
 
-    Open profile: notepad $PROFILE
+Open your profile: ```notepad $PROFILE```
 
-    Paste this code:
+Paste the following block at the end of the file:
 
-PowerShell
+```PowerShell
 
 function Get-Gemini {
-    param([Parameter(Mandatory=$true, Position=0)][string]$Prompt)
+    param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$Prompt
+    )
+
     $PythonExe = "$env:USERPROFILE\GeminiCLI\venv\Scripts\python.exe"
+    
+    # Inline Python script using the modern google-genai SDK
     $Script = @"
 from genai import Client
-import os, sys
-client = Client(api_key=os.environ.get('GOOGLE_API_KEY'))
+import os
+import sys
+
+api_key = os.environ.get('GOOGLE_API_KEY')
+if not api_key:
+    print('Error: GOOGLE_API_KEY not found in environment.')
+    sys.exit(1)
+
+client = Client(api_key=api_key)
+
 try:
-    response = client.models.generate_content(model='gemini-1.5-flash', contents=sys.argv[1])
+    response = client.models.generate_content(
+        model='gemini-1.5-flash',
+        contents=sys.argv[1]
+    )
     print(response.text)
 except Exception as e:
     print(f'Error: {str(e)}')
 "@
+
     & $PythonExe -c $Script $Prompt
 }
+
 Set-Alias -Name gemini -Value Get-Gemini
+```
 
 🚀 Usage
 
-Simply type gemini followed by your question in any PowerShell window:
-PowerShell
+You can now call Gemini from any PowerShell window:
+```PowerShell
 
-gemini "Explain how to secure a 1998 Econoline van's internal network"
+gemini "Explain the difference between a TCP and UDP sweep in Nmap"
+```
+
+📝 Troubleshooting
+
+If you see a 404 or Model Not Found error, ensure you have updated to the latest SDK: pip install -U google-genai inside your %USERPROFILE%\GeminiCLI\venv environment.
