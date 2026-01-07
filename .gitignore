@@ -1,8 +1,16 @@
-# Local python environment
+# Python environment
 venv/
 .venv/
+env/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Environment variables / Keys
+# Windows local files
+.DS_Store
+Thumbs.db
+
+# User specific
 .env
+*.log
